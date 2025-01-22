@@ -2,11 +2,25 @@ const express = require('express')
 const router = express.Router()
 const authMiddleware = require('../middlewares/auth.middleware')
 const mapsController = require('../controllers/maps.controller')
-const { check } = require('express-validator')
-const { validationResult } = require('express-validator')
+const { query } = require('express-validator')
 
-const { getAddressCoordinates } = require('../services/maps.service')
+router.get('/get-coordinates',
+  query('address').isString().isLength({ min: 3 }),
+  authMiddleware.authUser,
+  mapsController.getCoordinates
+)
 
-router.get('/get-coordinates', mapsController.getCoordinates)
+router.get('/get-distance-time',
+  query('origin').isString().isLength({ min: 3 }),
+  query('destination').isString().isLength({ min: 3 }),
+  authMiddleware.authUser,
+  mapsController.getDistanceTime
+)
+
+router.get('/get-suggestions',
+  query('input').isString().isLength({ min: 3 }),
+  authMiddleware.authUser,
+  mapsController.getAutoCompleteSuggestions
+)
 
 module.exports = router

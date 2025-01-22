@@ -8,7 +8,9 @@ const SocketContextProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_BASE_URL, {
+    // Use a separate socket URL without /api prefix
+    const socketURL = 'http://localhost:4000'
+    const newSocket = io(socketURL, {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,

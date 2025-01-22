@@ -17,7 +17,18 @@ const CaptainLogin = () => {
     setError('')
     
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/captains/login`, formData)
+      // Using direct URL for debugging
+      const baseUrl = 'http://localhost:4000';
+      const loginUrl = `${baseUrl}/api/captains/login`;
+      console.log('Attempting login with URL:', loginUrl);
+      
+      const response = await axios.post(loginUrl, formData, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      });
+      
       if (response.status === 200) {
         const data = response.data
         localStorage.setItem('captainToken', data.token)
