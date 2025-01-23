@@ -12,6 +12,9 @@ const rideRoutes = require('./routes/ride.routes');
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
+const UserModel = require('./models/user.model');
+const CaptainModel = require('./models/captain.model');
+const RideModel = require('./models/ride.model');
 
 
 // Middleware
@@ -49,38 +52,110 @@ app.use((req, res) => {
 
 // Socket.IO setup with proper CORS
 const io = new Server(server, {
+  path: '/socket.io',
   cors: {
     origin: "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization"],
   },
-  transports: ['websocket', 'polling']
+  allowEIO3: true,
+  transports: ['websocket', 'polling'],
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('A user connected')
+  console.log('A user connected with ID:', socket.id);
 
-  socket.on('join', (data) => {
-    
-    socket.join(data.userId)
-    
-    // Test emit - remove this in production
-    setTimeout(() => {
-      socket.emit('new_ride_request', {
-        pickup: "Test Pickup Location",
-        destination: "Test Destination",
-        fare: "₹150",
-        distance: "5km"
-      })
-    }, 5000)
-  })
+  // Handle user/captain joining
+  socket.on('join', async (data) => {
+    try {
+      const { userId, userType } = data;
+      console.log(`Attempting to join ${userType} with ID: ${userId}`);
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected')
-  })
-})
+      if (!userId || !userType) {
+        socket.emit('error', { message: 'Missing userId or userType' });
+        return;
+      }
+
+      let updateResult;
+      if (userType === 'user') {
+        updateResult = await UserModel.findByIdAndUpdate(
+          userId,
+          {
+            socketId: socket.id,
+            isOnline: true
+          },
+          { new: true }
+        );
+      } else if (userType === 'captain') {
+        updateResult = await CaptainModel.findByIdAndUpdate(
+          userId,
+          {
+            socketId: socket.id,
+            isOnline: true
+          },
+          { new: true }
+        );
+      } else {
+        socket.emit('error', { message: 'Invalid user type' });
+        return;
+      }
+
+      if (!updateResult) {
+        socket.emit('error', { message: 'User not found' });
+        return;
+      }
+
+      socket.join(userId);
+      socket.emit('joined', { message: 'Successfully joined', userId, userType });
+      console.log(`${userType} with ID ${userId} joined successfully`);
+    } catch (error) {
+      console.error('Error in join event:', error);
+      socket.emit('error', { message: 'Server error during join' });
+    }
+  });
+
+  // Handle disconnect
+  socket.on('disconnect', async () => {
+    console.log('User disconnected:', socket.id);
+    try {
+      // Update user status in both models
+      await UserModel.findOneAndUpdate(
+        { socketId: socket.id },
+        { socketId: null, isOnline: false }
+      );
+      await CaptainModel.findOneAndUpdate(
+        { socketId: socket.id },
+        { socketId: null, isOnline: false }
+      );
+    } catch (error) {
+      console.error('Error updating disconnect status:', error);
+    }
+  });
+});
+
+// Helper function to send message to specific socket
+const sendMessageToSocketId = (socketId, messageObject) => {
+  try {
+    if (!io) {
+      throw new Error('Socket.io not initialized');
+    }
+
+    if (!socketId || !messageObject || !messageObject.event) {
+      throw new Error('Invalid message parameters');
+    }
+
+    console.log('Sending message:', messageObject);
+    io.to(socketId).emit(messageObject.event, messageObject.data);
+    return true;
+  } catch (error) {
+    console.error('Send message error:', error);
+    return false;
+  }
+};
 
 const PORT = process.env.PORT || 4000
 

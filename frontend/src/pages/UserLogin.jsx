@@ -9,27 +9,48 @@ const UserLogin = () => {
     email: '',
     password: ''
   })
-
-  const { user, setUser } = useContext(UserContext)
+  const [error, setError] = useState('')
+  const { setUser } = useContext(UserContext)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const userData = {
-      email: formData.email,
-      password: formData.password
-    }
+    setError('')
     
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/users/login`, userData)
-      if (response.status === 200) {
-        const data = response.data
-        setUser(data.user)
-        localStorage.setItem('token', data.token)
-        navigate('/home')
+      const baseUrl = 'http://localhost:4000'
+      const loginUrl = `${baseUrl}/api/users/login`
+      console.log('Attempting login with URL:', loginUrl)
+      
+      const response = await axios.post(loginUrl, formData, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      })
+      
+      if (response.status === 200 && response.data) {
+        console.log('Login successful:', response.data)
+        localStorage.setItem('userToken', response.data.token)
+        setUser(response.data.user)
+        
+        // Small delay to ensure context is updated
+        setTimeout(() => {
+          navigate('/home', { replace: true })
+        }, 100)
+      } else {
+        setError('Invalid response from server')
       }
     } catch (error) {
       console.error('Login error:', error.response?.data || error.message)
+      setError(error.response?.data?.message || 'Login failed. Please try again.')
     }
+  }
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
   }
 
   return (
@@ -47,38 +68,44 @@ const UserLogin = () => {
             <input
               className='border-2 mb-4 border-gray-300 rounded-md px-4 py-2 bg-gray-50 w-full text-lg placeholder:text-sm'
               required 
-              type="email" 
-              placeholder="Email"
+              type="email"
+              name="email"
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={handleChange}
+              placeholder="Enter your email"
             />
-            <h3 className='text-lg font-medium'>Enter Password</h3>
+            
+            <h3 className='text-lg mb-2 font-medium'>Enter your password</h3>
             <input
               className='border-2 mb-4 border-gray-300 rounded-md px-4 py-2 bg-gray-50 w-full text-lg placeholder:text-sm'
-              required 
-              type="password" 
-              placeholder="Password"
+              required
+              type="password"
+              name="password"
               value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              onChange={handleChange}
+              placeholder="Enter your password"
             />
-            <button
-              className='bg-black mb-4 text-white w-full px-4 py-2 rounded hover:bg-gray-800 mt-5 transition-colors duration-300'
+
+            {error && (
+              <div className="text-red-500 mb-4">{error}</div>
+            )}
+
+            <button 
               type="submit"
+              className='bg-black text-white w-full py-3 rounded-lg text-lg font-medium hover:bg-gray-800'
             >
-              Login
+              Next
             </button>
-            <p className='text-center text-gray-600'>
-              New Here? <Link to="/user-signup" className='text-blue-600 hover:text-blue-800'>Create new account</Link>
-            </p>
           </form>
-        </div>
-        <div className='px-6 pb-6'>
-          <Link
-            to="/captain-login"
-            className='bg-[#10b461] flex justify-center items-center text-white w-full px-4 py-2 rounded hover:bg-green-600 transition-colors duration-300'
-          >
-            Sign in as Captain
-          </Link>
+
+          <div className='mt-4 text-center'>
+            <p className='text-gray-600'>
+              Don't have an account?{' '}
+              <Link to="/user-signup" className='text-black font-medium'>
+                Sign up
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

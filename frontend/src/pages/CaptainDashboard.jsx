@@ -7,6 +7,9 @@ import RidePopUp from '../components/RidePopUp'
 import { gsap } from 'gsap'
 import ConfirmRidePopUp from '../components/ConfirmRidePopUp'
 
+
+
+
 const CaptainDashboard = () => {
     const navigate = useNavigate()
     const { captainData, setCaptainData } = useContext(CaptainDataContext)
@@ -15,6 +18,17 @@ const CaptainDashboard = () => {
     const ridePopupPanelRef = useRef(null)
     const [ride, setRide] = useState(null)
     const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false)
+
+    const { captain} = useContext(CaptainDataContext)
+
+    useEffect(() => {
+        socket.emit('join', {
+            userId: captainData._id,
+            userType: 'captain'
+        })
+    })
+    
+
 
     const handleLogout = () => {
         localStorage.removeItem('captainToken')

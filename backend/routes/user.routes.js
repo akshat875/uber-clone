@@ -19,6 +19,7 @@ router.post('/register', [
 ], userController.registerUser);
 
 // Protected routes
+router.get('/verify', authMiddleware.authUser, userController.verifyUser);
 router.get('/profile', authMiddleware.authUser, userController.getUserProfile);
 router.get('/logout', authMiddleware.authUser, userController.logoutUser);
 

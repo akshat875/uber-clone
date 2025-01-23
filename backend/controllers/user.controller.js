@@ -80,6 +80,21 @@ module.exports.getUserProfile = async (req, res, next) => {
         next(error);
     }
 }
+
+module.exports.verifyUser = async (req, res, next) => {
+    try {
+        // User is already verified through authMiddleware
+        // Just return the user data
+        const user = await userModel.findById(req.user._id).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json({ user });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports.logoutUser = async (req, res, next) => {
     try {
         // Get token from Authorization header

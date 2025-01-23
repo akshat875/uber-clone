@@ -3,7 +3,7 @@ import { gsap } from 'gsap'
 import 'remixicon/fonts/remixicon.css'
 import LookingForDriver from './LookingForDriver'
 
-const ConfirmRide = ({ vehicle, onBack }) => {
+const ConfirmRide = ({ vehicle, onBack, pickup, destination }) => {
     const confirmPanelRef = useRef(null)
     const [showLookingForDriver, setShowLookingForDriver] = useState(false)
 
@@ -38,7 +38,12 @@ const ConfirmRide = ({ vehicle, onBack }) => {
     }
 
     if (showLookingForDriver) {
-        return <LookingForDriver vehicle={vehicle} onBack={handleLookingForDriverBack} />
+        return <LookingForDriver 
+            vehicle={vehicle} 
+            onBack={handleLookingForDriverBack} 
+            pickup={pickup}
+            destination={destination}
+        />
     }
 
     return (
@@ -61,21 +66,20 @@ const ConfirmRide = ({ vehicle, onBack }) => {
             <div className="p-4 border rounded-lg mb-4">
                 <img src="https://www.pngplay.com/wp-content/uploads/8/Uber-PNG-Photos.png" alt="" />
                 <div className="flex items-center space-x-3">
-                    <i class="ri-map-pin-range-fill"></i>
+                    <i className="ri-map-pin-range-fill"></i>
                     <div>
-                        <h3>h63/11-4</h3>
-                        <p> rana youth hostel </p>
+                        <h3 className="font-medium">{pickup || 'Loading pickup location...'}</h3>
+                        <p className="text-sm text-gray-500">Pickup Location</p>
                     </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                    <i class="ri-map-pin-2-fill"></i>
+                <div className="flex items-center space-x-3 mt-3">
+                    <i className="ri-map-pin-2-fill"></i>
                     <div>
-                        <h3>h63/11-4</h3>
-                        <p> rana youth hostel </p>
+                        <h3 className="font-medium">{destination || 'Loading destination...'}</h3>
+                        <p className="text-sm text-gray-500">Drop Location</p>
                     </div>
-
                 </div>
-                <div className="flex justify-between items-center mb-3">
+                <div className="flex justify-between items-center mb-3 mt-4">
                     <div className="flex items-center">
                         <i className="ri-price-tag-3-fill text-xl"></i>
                         <span className="font-medium ml-2">Fare</span>

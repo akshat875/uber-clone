@@ -39,3 +39,31 @@ module.exports.createRide = async (req, res) => {
         });
     }
 }
+
+module.exports.getFare = async (req, res) => {
+    try {
+        const { pickup, destination } = req.query;
+        console.log('Getting fare for:', { pickup, destination });
+
+        if (!pickup || !destination) {
+            return res.status(400).json({
+                success: false,
+                message: 'Pickup and destination locations are required'
+            });
+        }
+
+        const fares = await rideService.getFare(pickup, destination);
+        console.log('Calculated fares:', fares);
+
+        return res.json({
+            success: true,
+            data: fares
+        });
+    } catch (error) {
+        console.error('Error in getFare controller:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to calculate fare'
+        });
+    }
+};
